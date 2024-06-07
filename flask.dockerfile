@@ -1,4 +1,4 @@
-FROM python:3.9-slim-buster
+FROM python:3.9-slim
 
 # Set the working directory in the container
 WORKDIR /app
@@ -12,11 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code into the container
 COPY . .
 
-# Expose port 4000 to allow communication to/from the container
-EXPOSE 4000
-
 # Set environment variables
 ENV FLASK_APP=app.py
+ENV FLASK_RUN_HOST=0.0.0.0
 
-# Run the application
-CMD ["python", "app.py"]
+# Run the application with Gunicorn for better performance and scalability
+CMD ["gunicorn", "--bind", "0.0.0.0:80", "app:create_app()"]
