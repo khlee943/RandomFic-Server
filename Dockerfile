@@ -16,5 +16,8 @@ COPY . .
 ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 
+# Expose the port the app runs on
+EXPOSE 5000
+
 # Run the application with Gunicorn for better performance and scalability
 CMD ["gunicorn", "run:app"]
