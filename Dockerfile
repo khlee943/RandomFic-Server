@@ -13,7 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # root certificate
-COPY path/to/local/root.crt /root/.postgresql/root.crt
+COPY C:/Users/aquak/Render/root.crt /root/.postgresql/root.crt
 
 # Set environment variables
 ENV FLASK_APP=app.py
