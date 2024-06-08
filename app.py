@@ -13,16 +13,16 @@ def create_app():
     CORS(app)  # Enable CORS for all routes
 
     # Configure the SQLAlchemy database URI using environment variables
-    db_user = os.getenv('DB_USER')
-    db_password = os.getenv('DB_PASSWORD')
-    db_host = os.getenv('DB_HOST')
-    db_port = os.getenv('DB_PORT')
-    db_name = os.getenv('DB_NAME')
+    # db_user = os.getenv('DB_USER')
+    # db_password = os.getenv('DB_PASSWORD')
+    # db_host = os.getenv('DB_HOST')
+    # db_port = os.getenv('DB_PORT')
+    # db_name = os.getenv('DB_NAME')
 
-    DATABASE_URI = f'mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
+    db_uri = os.getenv('DATABASE_URI')  # Use the provided PostgreSQL URI
 
     # Initialize the SQLAlchemy database
-    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db = SQLAlchemy(app)
 
