@@ -7,8 +7,12 @@ import csv
 from tenacity import retry, stop_after_delay, wait_fixed
 from flask_talisman import Talisman
 import logging
+from sqlalchemy.dialects.postgresql.base import PGDialect
 
 def create_app():
+    # Override the _get_server_version_info method
+    PGDialect._get_server_version_info = lambda *args: (9, 2)
+
     app = Flask(__name__)
     CORS(app)  # Enable CORS for all routes
 
