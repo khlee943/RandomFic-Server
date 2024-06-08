@@ -89,7 +89,6 @@ def create_app():
     # Create all tables within the application context
     with app.app_context():
         # Drop all tables (clear the database)
-        db.drop_all()
         # Create all tables
         db.create_all()
 
