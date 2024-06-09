@@ -14,8 +14,9 @@ __Deployment__
 For development:
 
 + Clone repository
-+ Configure .env file
-+ Run npm run dev
++ docker build -t myapp .
++ docker run -p 8080:8080 myapp
++ Open [http://localhost:8080](http://localhost:3000) with your browser to see the result.
 
 For production:
 
