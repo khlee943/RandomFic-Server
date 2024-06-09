@@ -7,7 +7,6 @@ __Tech Stack__
 + Flask (w/ Python)
 + Flask-Talisman for security config
 + Postgresql & SQLAlchemy for database
-+ Next.js (w/ Typescript)
 + Docker to containerize
 
 __Deployment__
