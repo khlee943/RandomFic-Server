@@ -18,12 +18,14 @@ def create_app():
     app = Flask(__name__)
     CORS(app)  # Enable CORS for all routes
 
-    # Configure the SQLAlchemy database URI using environment variables
+    # Configure the SQLAlchemy database URI using environment variables; deployment only
     # db_user = os.getenv('DB_USER')
     # db_password = os.getenv('DB_PASSWORD')
     # db_host = os.getenv('DB_HOST')
     # db_port = os.getenv('DB_PORT')
     # db_name = os.getenv('DB_NAME')
+
+    # for deployment: db_uri = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 
     db_uri = os.getenv('DATABASE_URI')  # Use the provided PostgreSQL URI
 
