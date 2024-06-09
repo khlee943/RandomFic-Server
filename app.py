@@ -119,10 +119,10 @@ def create_app():
     with app.app_context():
         # Drop all tables (clear the database)
         # Create all tables
+        db.drop_all()
         db.create_all()
 
-        if Fanfic.query.count() == 0:
-            # Load data from CSV file when the app starts
-            load_data_from_csv('fanfic_sentiment_analysis.csv')
+        # Load data from CSV file when the app starts
+        load_data_from_csv('fanfic_sentiment_analysis.csv')
 
     return app
