@@ -35,6 +35,7 @@ def create_app():
     # Define the database model
     class Fanfic(db.Model):
         id = db.Column(db.Integer, primary_key=True)
+        index = db.Column(db.Integer)
         title = db.Column(db.String(255))
         author = db.Column(db.String(255))
         fandom = db.Column(db.String(255))
@@ -51,7 +52,7 @@ def create_app():
             reader = csv.DictReader(csvfile)
             for row in reader:
                 fanfic = Fanfic(
-                    id=int(row['ID']),
+                    index=int(row['ID']),
                     title=row['Title'],
                     author=row['Author'],
                     fandom=row['Fandom'],
@@ -65,8 +66,8 @@ def create_app():
     # Method to randomly select a fanfic
     @retry(stop=stop_after_delay(30), wait=wait_fixed(5))
     def get_random_fanfic():
-        random_id = random.randint(0, 2826)
-        return Fanfic.query.filter_by(id=random_id).first()
+        random_index = random.randint(0, 2826)
+        return Fanfic.query.filter_by(index=random_index).first()
 
     @app.route('/random_fanfic', methods=['GET'])
     def random_fanfic():
@@ -88,7 +89,7 @@ def create_app():
             fanfic_list = []
             for fanfic in fanfics:
                 fanfic_data = {
-                    'id': fanfic.id,
+                    'index': fanfic.index,
                     'title': fanfic.title,
                     'author': fanfic.author,
                     'fandom': fanfic.fandom,
