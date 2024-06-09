@@ -1,5 +1,5 @@
 import os
-
+import random
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -49,6 +49,7 @@ def create_app():
             reader = csv.DictReader(csvfile)
             for row in reader:
                 fanfic = Fanfic(
+                    id=int(row['ID']),
                     title=row['Title'],
                     author=row['Author'],
                     fandom=row['Fandom'],
@@ -62,8 +63,8 @@ def create_app():
     # Method to randomly select a fanfic
     @retry(stop=stop_after_delay(30), wait=wait_fixed(5))
     def get_random_fanfic():
-        return Fanfic.query.order_by(db.func.rand()).first()
-
+        random_id = random.randint(0, 2826)
+        return Fanfic.query.filter_by(id=random_id).first()
     @app.route('/random_fanfic', methods=['GET'])
     def random_fanfic():
         try:
@@ -74,6 +75,27 @@ def create_app():
                 return jsonify({'error': 'No fanfics found'}), 404
         except Exception as e:
             app.logger.error('An error occurred:', exc_info=True)
+
+    @app.route('/fanfics', methods=['GET'])
+    def get_fanfics():
+        try:
+            fanfics = Fanfic.query.all()
+            fanfic_list = []
+            for fanfic in fanfics:
+                fanfic_data = {
+                    'index': fanfic.index,
+                    'title': fanfic.title,
+                    'author': fanfic.author,
+                    'fandom': fanfic.fandom,
+                    'url': fanfic.url,
+                    'kudos': fanfic.kudos,
+                    'average_sentiment': fanfic.average_sentiment
+                }
+                fanfic_list.append(fanfic_data)
+            return jsonify(fanfic_list)
+        except Exception as e:
+            app.logger.error('An error occurred:', exc_info=True)
+            return jsonify({'error': 'Internal Server Error'}), 500
 
     @app.route('/')
     def index():
@@ -92,7 +114,8 @@ def create_app():
         # Create all tables
         db.create_all()
 
-        # Load data from CSV file when the app starts
-        load_data_from_csv('fanfic_sentiment_analysis.csv')
+        if Fanfic.query.count() == 0:
+            # Load data from CSV file when the app starts
+            load_data_from_csv('fanfic_sentiment_analysis.csv')
 
     return app
