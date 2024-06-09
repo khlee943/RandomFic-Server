@@ -1,5 +1,7 @@
 import os
 import random
+import traceback
+
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -75,6 +77,8 @@ def create_app():
                 return jsonify({'error': 'No fanfics found'}), 404
         except Exception as e:
             app.logger.error('An error occurred:', exc_info=True)
+            traceback.print_exc()
+            return jsonify({'error': str(e)}), 500
 
     @app.route('/fanfics', methods=['GET'])
     def get_fanfics():
@@ -95,7 +99,8 @@ def create_app():
             return jsonify(fanfic_list)
         except Exception as e:
             app.logger.error('An error occurred:', exc_info=True)
-            return jsonify({'error': 'Internal Server Error'}), 500
+            traceback.print_exc()
+            return jsonify({'error': str(e)}), 500
 
     @app.route('/')
     def index():
