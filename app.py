@@ -67,6 +67,7 @@ def create_app():
     def get_random_fanfic():
         random_id = random.randint(0, 2826)
         return Fanfic.query.filter_by(id=random_id).first()
+
     @app.route('/random_fanfic', methods=['GET'])
     def random_fanfic():
         try:
@@ -87,7 +88,7 @@ def create_app():
             fanfic_list = []
             for fanfic in fanfics:
                 fanfic_data = {
-                    'index': fanfic.index,
+                    'id': fanfic.id,
                     'title': fanfic.title,
                     'author': fanfic.author,
                     'fandom': fanfic.fandom,
