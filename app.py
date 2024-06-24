@@ -183,6 +183,7 @@ def create_app():
 
     # Create all tables within the application context
     with app.app_context():
+        db.drop_all()
         db.create_all()
 
         # Load data from CSV file when the app starts
