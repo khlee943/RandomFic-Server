@@ -9,7 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from sqlalchemy.exc import OperationalError
 from sqlalchemy import PickleType
-from tenacity import retry, stop_after_delay, wait_fixed
+from retrying import retry
 from flask_talisman import Talisman
 import logging
 from sqlalchemy.dialects.postgresql.base import PGDialect
@@ -65,7 +65,7 @@ def create_app():
             return None  # Handle the error as appropriate, e.g., logging the error
 
     # Load all fanfic info data from CSV file into the database
-    @retry(stop=stop_after_delay(30), wait=wait_fixed(1000))
+    @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_attempt_number=5)
     def insert_fanfic_data(chunk):
         global tfidf_vectorizer_full  # Ensure tfidf_vectorizer_full is defined globally
         chunk['Vector'] = chunk['Vector'].apply(safe_json_loads)
@@ -114,7 +114,7 @@ def create_app():
                 continue
 
     # Method to randomly select a fanfic
-    @retry(stop=stop_after_delay(30), wait=wait_fixed(5))
+    @retry(stop_max_delay=30000, wait_fixed=5000)
     def get_random_fanfic():
         random_index = random.randint(0, 2826)
         return Fanfic.query.filter_by(index=random_index).first()
