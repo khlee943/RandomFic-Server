@@ -9,7 +9,7 @@ import re
 
 from sklearn.decomposition import PCA
 from unidecode import unidecode
-from chat import preprocess_data, extract_features
+from chat import preprocess_data, extract_features # NOTE: move this file back out of scraping+analysis for useage
 import json
 
 # Initialize VADER sentiment analyzer
@@ -81,7 +81,7 @@ pca = PCA(n_components=n_components)
 tfidf_matrix_reduced = pca.fit_transform(tfidf_matrix_dense)
 
 # Save PCA model if needed for later use
-with open('pca_model.pkl', 'wb') as f:
+with open('../pca_model.pkl', 'wb') as f:
     pickle.dump(pca, f)
 
 # Serialize vectors into JSON strings and add to df

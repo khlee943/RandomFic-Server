@@ -1,15 +1,19 @@
+import json
 import os
 import random
 import traceback
 
-from flask import Flask, jsonify
+import pandas as pd
+from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-import csv
+from sqlalchemy import PickleType
 from tenacity import retry, stop_after_delay, wait_fixed
 from flask_talisman import Talisman
 import logging
 from sqlalchemy.dialects.postgresql.base import PGDialect
+from chat import preprocess_data, extract_features, recommend_fanfic
+
 
 def create_app():
     # Override the _get_server_version_info method
@@ -18,19 +22,29 @@ def create_app():
     app = Flask(__name__)
     CORS(app)  # Enable CORS for all routes
 
-    # Configure the SQLAlchemy database URI using environment variables
-    # db_user = os.getenv('DB_USER')
-    # db_password = os.getenv('DB_PASSWORD')
-    # db_host = os.getenv('DB_HOST')
-    # db_port = os.getenv('DB_PORT')
-    # db_name = os.getenv('DB_NAME')
+    # Configure the SQLAlchemy database URI using environment variables; development only
+    db_user = os.getenv('DB_USER', 'postgres')
+    db_password = os.getenv('DB_PASSWORD', 'Gatoyom4')
+    db_host = os.getenv('DB_HOST', 'db')
+    db_port = os.getenv('DB_PORT', '5432')
+    db_name = os.getenv('DB_NAME', 'fanfics')
 
-    db_uri = os.getenv('DATABASE_URI')  # Use the provided PostgreSQL URI
+    # for deployment
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://postgres:{db_password}@db:5432/fanfics"
+    db_uri = f"postgresql://postgres:{db_password}@db:5432/fanfics"
+    # for production: db_uri = os.getenv('DATABASE_URI')  # Use the provided PostgreSQL URI
 
     # Initialize the SQLAlchemy database
-    app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
+    # app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db = SQLAlchemy(app)
+
+    # class ChatLog(db.Model):
+    #     id = db.Column(db.Integer, primary_key=True)
+    #     user_input = db.Column(db.String, nullable=False)
+    #     response = db.Column(db.String, nullable=False)
+    #     timestamp = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
 
     # Define the database model
     class Fanfic(db.Model):
@@ -38,30 +52,59 @@ def create_app():
         index = db.Column(db.Integer)
         title = db.Column(db.String(255))
         author = db.Column(db.String(255))
-        fandom = db.Column(db.String(255))
+        fandom = db.Column(db.String(500))
         url = db.Column(db.String(255))
         kudos = db.Column(db.String(255))
         average_sentiment = db.Column(db.Float)
+        vector = db.Column(PickleType)
 
         def __repr__(self):
             return f"<Fanfic {self.title}>"
 
-    # Load data from CSV file into the database
+    # Random Fanfic Feature
+
+    def safe_json_loads(x):
+        try:
+            return json.loads(x)
+        except (json.JSONDecodeError, TypeError):
+            return None  # Handle the error as appropriate, e.g., logging the error
+
+    # Load all fanfic info data from CSV file into the database
     def load_data_from_csv(csv_file):
-        with open(csv_file, newline='', encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                fanfic = Fanfic(
-                    index=int(row['ID']),
-                    title=row['Title'],
-                    author=row['Author'],
-                    fandom=row['Fandom'],
-                    url=row['Url'],
-                    kudos=row['Kudos'],
-                    average_sentiment=float(row['Average_Sentiment'])
-                )
-                db.session.add(fanfic)
-            db.session.commit()
+        global tfidf_vectorizer_full
+        data = preprocess_data('Scraping+Analysis/all_fanfics.csv')
+        tfidf_vectorizer_full,_ = extract_features(data)
+        data_chunks = pd.read_csv(csv_file, chunksize=500)
+
+        for chunk in data_chunks:
+            chunk['Vector'] = chunk['Vector'].apply(safe_json_loads)
+
+            for index, row in chunk.iterrows():
+                try:
+                    # Truncate `fandom` if length exceeds 500 characters
+                    fandom_adjusted = row['Fandom']
+                    if len(fandom_adjusted) > 500:
+                        fandom_adjusted = f"{fandom_adjusted[:497]}..."
+
+                    fanfic = Fanfic(
+                        index=int(row['ID']),
+                        title=row['Title'],
+                        author=row['Author'],
+                        fandom=fandom_adjusted,
+                        url=row['Url'],
+                        kudos=row['Kudos'],
+                        average_sentiment=float(row['Average_Sentiment']),
+                        vector=row['Vector']  # Assuming 'Vector' is a column containing JSON data
+                    )
+                    db.session.add(fanfic)
+                except Exception as e:
+                    print(f"Error inserting row with ID {row['ID']}: {e}")
+                    print(f"Row data: {row}")
+                    continue
+
+            db.session.commit()  # Commit after each chunk to avoid excessive memory usage
+            print(f"Processed {len(chunk)} rows.")
+            del chunk
 
     # Method to randomly select a fanfic
     @retry(stop=stop_after_delay(30), wait=wait_fixed(5))
@@ -74,7 +117,9 @@ def create_app():
         try:
             fanfic = get_random_fanfic()
             if fanfic:
-                return jsonify({'title': fanfic.title, 'author': fanfic.author, 'fandom': fanfic.fandom, 'url': fanfic.url, 'kudos': fanfic.kudos, 'average_sentiment': fanfic.average_sentiment})
+                return jsonify(
+                    {'title': fanfic.title, 'author': fanfic.author, 'fandom': fanfic.fandom, 'url': fanfic.url,
+                     'kudos': fanfic.kudos, 'average_sentiment': fanfic.average_sentiment})
             else:
                 return jsonify({'error': 'No fanfics found'}), 404
         except Exception as e:
@@ -104,11 +149,38 @@ def create_app():
             traceback.print_exc()
             return jsonify({'error': str(e)}), 500
 
+    # Recommendation Fanfic Feature
+
+    @app.route('/chat', methods=['POST'])
+    def chat():
+        try:
+            user_input = request.json['message']
+            fanfics = Fanfic.query.all()
+
+            response_text, recommended_fanfic = recommend_fanfic(user_input, tfidf_vectorizer_full, fanfics)
+
+            response = {
+                'title': recommended_fanfic.title,
+                'author': recommended_fanfic.author,
+                'url': recommended_fanfic.url,
+                'fandom': recommended_fanfic.fandom,
+                'kudos': recommended_fanfic.kudos,
+                'average_sentiment': recommended_fanfic.average_sentiment,
+                'response_text': response_text
+            }
+
+            return jsonify({"response": response})
+        except Exception as e:
+            app.logger.error('An error occurred:', exc_info=True)
+            traceback.print_exc()
+            return jsonify({'error': str(e)}), 500
+
     @app.route('/')
     def index():
         return 'Hello, World!!!!'
 
     # Configure security headers
+    # talisman = Talisman(app, content_security_policy=None, force_https=False)
     talisman = Talisman(app)
 
 
@@ -117,12 +189,15 @@ def create_app():
 
     # Create all tables within the application context
     with app.app_context():
-        # Drop all tables (clear the database)
-        # Create all tables
-        db.drop_all()
         db.create_all()
 
         # Load data from CSV file when the app starts
         load_data_from_csv('fanfic_sentiment_analysis.csv')
 
     return app
+
+# # running for development
+# if __name__ == '__main__':
+#     app = create_app()
+#     # app.run(host='0.0.0.0', port=5000, debug=True)
+#     app.run(debug=True)
