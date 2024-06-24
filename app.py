@@ -70,6 +70,9 @@ def create_app():
         global tfidf_vectorizer_full  # Ensure tfidf_vectorizer_full is defined globally
         chunk['Vector'] = chunk['Vector'].apply(safe_json_loads)
 
+        batch_size = 100
+        batch_counter = 0
+
         for index, row in chunk.iterrows():
             try:
                 # Truncate `fandom` if length exceeds 500 characters
@@ -88,12 +91,21 @@ def create_app():
                     vector=row['Vector']  # Assuming 'Vector' is a column containing JSON data
                 )
                 db.session.add(fanfic)
+                batch_counter += 1
+
+                # Commit every batch_size rows
+                if batch_counter >= batch_size:
+                    db.session.commit()
+                    batch_counter = 0
             except Exception as e:
                 print(f"Error inserting row with ID {row['ID']}: {e}")
                 print(f"Row data: {row}")
                 continue
 
-        db.session.commit()  # Commit after each chunk to avoid excessive memory usage
+        # Final commit for any remaining rows in the last batch
+        if batch_counter > 0:
+            db.session.commit()
+
         print(f"Processed {len(chunk)} rows.")
         del chunk
 
@@ -112,6 +124,54 @@ def create_app():
                 print(f"Error processing chunk: {e}")
                 # Handle other exceptions here if needed
                 continue
+
+    # @retry(wait=wait_exponential(multiplier=1, max=10), stop=stop_after_delay(50))
+    # def insert_fanfic_data(chunk):
+    #     global tfidf_vectorizer_full  # Ensure tfidf_vectorizer_full is defined globally
+    #     chunk['Vector'] = chunk['Vector'].apply(safe_json_loads)
+    #
+    #     for index, row in chunk.iterrows():
+    #         try:
+    #             # Truncate `fandom` if length exceeds 500 characters
+    #             fandom_adjusted = row['Fandom']
+    #             if len(fandom_adjusted) > 500:
+    #                 fandom_adjusted = f"{fandom_adjusted[:497]}..."
+    #
+    #             fanfic = Fanfic(
+    #                 index=int(row['ID']),
+    #                 title=row['Title'],
+    #                 author=row['Author'],
+    #                 fandom=fandom_adjusted,
+    #                 url=row['Url'],
+    #                 kudos=row['Kudos'],
+    #                 average_sentiment=float(row['Average_Sentiment']),
+    #                 vector=row['Vector']  # Assuming 'Vector' is a column containing JSON data
+    #             )
+    #             db.session.add(fanfic)
+    #         except Exception as e:
+    #             print(f"Error inserting row with ID {row['ID']}: {e}")
+    #             print(f"Row data: {row}")
+    #             continue
+    #
+    #     db.session.commit()  # Commit after each chunk to avoid excessive memory usage
+    #     print(f"Processed {len(chunk)} rows.")
+    #     del chunk
+    #
+    # def load_data_from_csv(csv_file):
+    #     global tfidf_vectorizer_full
+    #     data_chunks = pd.read_csv(csv_file, chunksize=1000)
+    #
+    #     for chunk in data_chunks:
+    #         try:
+    #             insert_fanfic_data(chunk)
+    #         except OperationalError as e:
+    #             print(f"OperationalError: {e}")
+    #             # You can log or handle the error as needed; retry decorator will retry up to stop_max_attempt_number times
+    #             continue
+    #         except Exception as e:
+    #             print(f"Error processing chunk: {e}")
+    #             # Handle other exceptions here if needed
+    #             continue
 
     # Method to randomly select a fanfic
     @retry(stop=stop_after_delay(30), wait=wait_fixed(5))
