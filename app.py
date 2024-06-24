@@ -100,6 +100,7 @@ def create_app():
             except Exception as e:
                 print(f"Error inserting row with ID {row['ID']}: {e}")
                 print(f"Row data: {row}")
+                db.session.rollback()
                 continue
 
         # Final commit for any remaining rows in the last batch
@@ -118,11 +119,11 @@ def create_app():
                 insert_fanfic_data(chunk)
             except OperationalError as e:
                 print(f"OperationalError: {e}")
-                # You can log or handle the error as needed; retry decorator will retry up to stop_max_attempt_number times
+                db.session.rollback()  # Rollback the session on error
                 continue
             except Exception as e:
                 print(f"Error processing chunk: {e}")
-                # Handle other exceptions here if needed
+                db.session.rollback()  # Rollback the session on error
                 continue
 
     # @retry(wait=wait_exponential(multiplier=1, max=10), stop=stop_after_delay(50))
