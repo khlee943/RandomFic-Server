@@ -1,10 +1,8 @@
 import pickle
 
 import pandas as pd
-import numpy as np
 import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
-# import spacy
 import re
 
 from sklearn.decomposition import PCA
@@ -76,7 +74,7 @@ tfidf_vectorizer, tfidf_matrix = extract_features(data)
 tfidf_matrix_dense = tfidf_matrix.toarray()
 
 # Do Principal Components Analysis to simplify the vectors by reducing number of dimensions/components
-n_components = 200
+n_components = 120
 pca = PCA(n_components=n_components)
 tfidf_matrix_reduced = pca.fit_transform(tfidf_matrix_dense)
 

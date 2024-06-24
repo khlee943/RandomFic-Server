@@ -13,7 +13,7 @@ from retrying import retry
 from flask_talisman import Talisman
 import logging
 from sqlalchemy.dialects.postgresql.base import PGDialect
-from chat import preprocess_data, extract_features, recommend_fanfic
+from chat import recommend_fanfic
 
 
 def create_app():
