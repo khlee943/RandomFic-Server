@@ -27,4 +27,4 @@ EXPOSE 8080
 # Run on localhost for now:
 #CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
 # Run the application with Gunicorn for better performance and scalability
-CMD ["gunicorn", "run:app"]
+CMD ["gunicorn", "run:app", "--timeout", "120", "-w", "4"]
