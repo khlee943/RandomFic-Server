@@ -11,18 +11,17 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code into the container
 COPY . .
-COPY all_csvs /app/back-end/all_csvs
 
 # COPY root.crt /root/.postgresql/root.crt
 
 # Set environment variables
 ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0
-ENV PORT=5000
-# changed from port 8080
+ENV PORT=8080
+# did dev on port 5000 changed from port 8080
 
 # Expose the port the app runs on
-EXPOSE 5000
+EXPOSE 8080
 
 
 # Run on localhost for now:
