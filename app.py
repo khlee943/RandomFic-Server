@@ -7,6 +7,7 @@ import pandas as pd
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from sqlalchemy.exc import OperationalError
 from sqlalchemy import PickleType
 from tenacity import retry, stop_after_delay, wait_fixed
 from flask_talisman import Talisman
@@ -64,41 +65,53 @@ def create_app():
             return None  # Handle the error as appropriate, e.g., logging the error
 
     # Load all fanfic info data from CSV file into the database
+    @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_attempt_number=5)
+    def insert_fanfic_data(chunk):
+        global tfidf_vectorizer_full  # Ensure tfidf_vectorizer_full is defined globally
+        chunk['Vector'] = chunk['Vector'].apply(safe_json_loads)
+
+        for index, row in chunk.iterrows():
+            try:
+                # Truncate `fandom` if length exceeds 500 characters
+                fandom_adjusted = row['Fandom']
+                if len(fandom_adjusted) > 500:
+                    fandom_adjusted = f"{fandom_adjusted[:497]}..."
+
+                fanfic = Fanfic(
+                    index=int(row['ID']),
+                    title=row['Title'],
+                    author=row['Author'],
+                    fandom=fandom_adjusted,
+                    url=row['Url'],
+                    kudos=row['Kudos'],
+                    average_sentiment=float(row['Average_Sentiment']),
+                    vector=row['Vector']  # Assuming 'Vector' is a column containing JSON data
+                )
+                db.session.add(fanfic)
+            except Exception as e:
+                print(f"Error inserting row with ID {row['ID']}: {e}")
+                print(f"Row data: {row}")
+                continue
+
+        db.session.commit()  # Commit after each chunk to avoid excessive memory usage
+        print(f"Processed {len(chunk)} rows.")
+        del chunk
+
     def load_data_from_csv(csv_file):
         global tfidf_vectorizer_full
-        data = preprocess_data('Scraping+Analysis/all_fanfics.csv')
-        tfidf_vectorizer_full,_ = extract_features(data)
         data_chunks = pd.read_csv(csv_file, chunksize=1000)
 
         for chunk in data_chunks:
-            chunk['Vector'] = chunk['Vector'].apply(safe_json_loads)
-
-            for index, row in chunk.iterrows():
-                try:
-                    # Truncate `fandom` if length exceeds 500 characters
-                    fandom_adjusted = row['Fandom']
-                    if len(fandom_adjusted) > 500:
-                        fandom_adjusted = f"{fandom_adjusted[:497]}..."
-
-                    fanfic = Fanfic(
-                        index=int(row['ID']),
-                        title=row['Title'],
-                        author=row['Author'],
-                        fandom=fandom_adjusted,
-                        url=row['Url'],
-                        kudos=row['Kudos'],
-                        average_sentiment=float(row['Average_Sentiment']),
-                        vector=row['Vector']  # Assuming 'Vector' is a column containing JSON data
-                    )
-                    db.session.add(fanfic)
-                except Exception as e:
-                    print(f"Error inserting row with ID {row['ID']}: {e}")
-                    print(f"Row data: {row}")
-                    continue
-
-            db.session.commit()  # Commit after each chunk to avoid excessive memory usage
-            print(f"Processed {len(chunk)} rows.")
-            del chunk
+            try:
+                insert_fanfic_data(chunk)
+            except OperationalError as e:
+                print(f"OperationalError: {e}")
+                # You can log or handle the error as needed; retry decorator will retry up to stop_max_attempt_number times
+                continue
+            except Exception as e:
+                print(f"Error processing chunk: {e}")
+                # Handle other exceptions here if needed
+                continue
 
     # Method to randomly select a fanfic
     @retry(stop=stop_after_delay(30), wait=wait_fixed(5))
