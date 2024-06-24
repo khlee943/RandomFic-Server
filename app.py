@@ -24,27 +24,21 @@ def create_app():
 
     # Configure the SQLAlchemy database URI using environment variables; development only
     db_user = os.getenv('DB_USER', 'postgres')
-    db_password = os.getenv('DB_PASSWORD', 'Gatoyom4')
+    db_password = os.getenv('DB_PASSWORD')
     db_host = os.getenv('DB_HOST', 'db')
     db_port = os.getenv('DB_PORT', '5432')
     db_name = os.getenv('DB_NAME', 'fanfics')
 
     # for deployment
+    # db_uri = f"postgresql://postgres:{db_password}@db:5432/fanfics"
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://postgres:{db_password}@db:5432/fanfics"
-    db_uri = f"postgresql://postgres:{db_password}@db:5432/fanfics"
-    # for production: db_uri = os.getenv('DATABASE_URI')  # Use the provided PostgreSQL URI
+    # for production:
+    db_uri = os.getenv('DATABASE_URI')  # Use the provided PostgreSQL URI
 
     # Initialize the SQLAlchemy database
-    # app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db = SQLAlchemy(app)
-
-    # class ChatLog(db.Model):
-    #     id = db.Column(db.Integer, primary_key=True)
-    #     user_input = db.Column(db.String, nullable=False)
-    #     response = db.Column(db.String, nullable=False)
-    #     timestamp = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
 
     # Define the database model
     class Fanfic(db.Model):
