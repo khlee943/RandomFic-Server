@@ -65,7 +65,7 @@ def create_app():
             return None  # Handle the error as appropriate, e.g., logging the error
 
     # Load all fanfic info data from CSV file into the database
-    @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_attempt_number=5)
+    @retry(stop=stop_after_delay(30), wait=wait_fixed(1000))
     def insert_fanfic_data(chunk):
         global tfidf_vectorizer_full  # Ensure tfidf_vectorizer_full is defined globally
         chunk['Vector'] = chunk['Vector'].apply(safe_json_loads)
