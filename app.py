@@ -68,7 +68,7 @@ def create_app():
         global tfidf_vectorizer_full
         data = preprocess_data('Scraping+Analysis/all_fanfics.csv')
         tfidf_vectorizer_full,_ = extract_features(data)
-        data_chunks = pd.read_csv(csv_file, chunksize=500)
+        data_chunks = pd.read_csv(csv_file, chunksize=200)
 
         for chunk in data_chunks:
             chunk['Vector'] = chunk['Vector'].apply(safe_json_loads)
