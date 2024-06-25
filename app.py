@@ -1,5 +1,6 @@
 import json
 import os
+import pickle
 import random
 import traceback
 
@@ -15,6 +16,9 @@ import logging
 from sqlalchemy.dialects.postgresql.base import PGDialect
 from chat import recommend_fanfic
 
+def load_tfidf_vectorizer():
+    with open('tfidf_vectorizer_full.pkl', 'rb') as f:
+        return pickle.load(f)
 
 def create_app():
     # Override the _get_server_version_info method
@@ -40,6 +44,8 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db = SQLAlchemy(app)
+
+    tfidf_vectorizer_full = load_tfidf_vectorizer()
 
     # Define the database model
     class Fanfic(db.Model):
