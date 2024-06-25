@@ -184,7 +184,7 @@ def create_app():
     # Recommendation Fanfic Feature
 
     @app.route('/chat', methods=['POST'])
-    def chat(fanfics):
+    def chat():
         try:
             global fanfics_pagination
             fanfics = fanfics_pagination.items
