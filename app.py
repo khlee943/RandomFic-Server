@@ -186,41 +186,38 @@ def create_app():
     @app.route('/chat', methods=['POST'])
     def chat():
         try:
-            global fanfics_pagination
-            fanfics = fanfics_pagination.items
-            for fanfic in fanfics:
-                fanfic_data = {
-                    'index': fanfic.index,
-                    'title': fanfic.title,
-                    'author': fanfic.author,
-                    'fandom': fanfic.fandom,
-                    'url': fanfic.url,
-                    'kudos': fanfic.kudos,
-                    'average_sentiment': fanfic.average_sentiment
-                }
-                recommended_fanfic = fanfic_data
-            return jsonify(recommended_fanfic)
-
-            # user_input = request.json['message']
-            # # fanfics = Fanfic.query.all()
             # global fanfics_pagination
             # fanfics = fanfics_pagination.items
-            # recommended_fanfic = fanfics[0]
-            #
-            # # response_text, recommended_fanfic = recommend_fanfic(user_input, tfidf_vectorizer, fanfics_pagination)
-            #
-            # response = {
-            #     'title': recommended_fanfic.title,
-            #     'author': recommended_fanfic.author,
-            #     'url': recommended_fanfic.url,
-            #     'fandom': recommended_fanfic.fandom,
-            #     'kudos': recommended_fanfic.kudos,
-            #     'average_sentiment': recommended_fanfic.average_sentiment,
-            #     # 'response_text': response_text
-            # }
-            #
-            # return jsonify({"response": response})
+            # for fanfic in fanfics:
+            #     fanfic_data = {
+            #         'index': fanfic.index,
+            #         'title': fanfic.title,
+            #         'author': fanfic.author,
+            #         'fandom': fanfic.fandom,
+            #         'url': fanfic.url,
+            #         'kudos': fanfic.kudos,
+            #         'average_sentiment': fanfic.average_sentiment
+            #     }
+            #     recommended_fanfic = fanfic_data
+            # return jsonify(recommended_fanfic)
 
+            user_input = request.json['message']
+            # fanfics = Fanfic.query.all()
+            global fanfics_pagination
+
+            response_text, recommended_fanfic = recommend_fanfic(user_input, tfidf_vectorizer, fanfics_pagination)
+
+            response = {
+                'title': recommended_fanfic.title,
+                'author': recommended_fanfic.author,
+                'url': recommended_fanfic.url,
+                'fandom': recommended_fanfic.fandom,
+                'kudos': recommended_fanfic.kudos,
+                'average_sentiment': recommended_fanfic.average_sentiment,
+                'response_text': response_text
+            }
+
+            return jsonify({"response": response})
 
         except Exception as e:
             app.logger.error('An error occurred:', exc_info=True)
