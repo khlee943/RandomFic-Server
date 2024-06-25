@@ -14,7 +14,7 @@ import json
 sia = SentimentIntensityAnalyzer()
 
 # Read in data
-csv_file = 'all_fanfics.csv'
+csv_file = '../all_fanfics.csv'
 df = pd.read_csv(csv_file)
 # Remove "Summary: " from the beginning of each row in the 'Text' column
 df['Summary'] = df['Summary'].str.replace('Summary: ', '', regex=False)

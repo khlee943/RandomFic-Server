@@ -14,7 +14,7 @@ from tenacity import retry, stop_after_delay, wait_exponential, wait_fixed
 from flask_talisman import Talisman
 import logging
 from sqlalchemy.dialects.postgresql.base import PGDialect
-from chat import recommend_fanfic
+from chat import preprocess_data, extract_features, recommend_fanfic
 
 def load_tfidf_vectorizer():
     with open('tfidf_vectorizer_full.pkl', 'rb') as f:
@@ -45,7 +45,8 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db = SQLAlchemy(app)
 
-    tfidf_vectorizer_full = load_tfidf_vectorizer()
+    data = preprocess_data('all_fanfics.csv')
+    tfidf_vectorizer_full, tfidf_matrix = extract_features(data)
 
     # Define the database model
     class Fanfic(db.Model):
@@ -73,7 +74,6 @@ def create_app():
     # Load all fanfic info data from CSV file into the database
     @retry(wait=wait_exponential(multiplier=1, max=10), stop=stop_after_delay(50))
     def insert_fanfic_data(chunk):
-        global tfidf_vectorizer_full  # Ensure tfidf_vectorizer_full is defined globally
         chunk['Vector'] = chunk['Vector'].apply(safe_json_loads)
 
         batch_size = 100
@@ -117,7 +117,6 @@ def create_app():
         del chunk
 
     def load_data_from_csv(csv_file):
-        global tfidf_vectorizer_full
         data_chunks = pd.read_csv(csv_file, chunksize=1000)
 
         for chunk in data_chunks:
