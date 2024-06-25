@@ -186,41 +186,46 @@ def create_app():
     @app.route('/chat', methods=['POST'])
     def chat(fanfics):
         try:
-            user_input = request.json['message']
-            # fanfics = Fanfic.query.all()
             global fanfics_pagination
             fanfics = fanfics_pagination.items
-            recommended_fanfic = fanfics[0]
+            for fanfic in fanfics:
+                fanfic_data = {
+                    'index': fanfic.index,
+                    'title': fanfic.title,
+                    'author': fanfic.author,
+                    'fandom': fanfic.fandom,
+                    'url': fanfic.url,
+                    'kudos': fanfic.kudos,
+                    'average_sentiment': fanfic.average_sentiment
+                }
+                recommended_fanfic = fanfic_data
+            return jsonify(recommended_fanfic)
 
-            # response_text, recommended_fanfic = recommend_fanfic(user_input, tfidf_vectorizer, fanfics_pagination)
+            # user_input = request.json['message']
+            # # fanfics = Fanfic.query.all()
+            # global fanfics_pagination
+            # fanfics = fanfics_pagination.items
+            # recommended_fanfic = fanfics[0]
+            #
+            # # response_text, recommended_fanfic = recommend_fanfic(user_input, tfidf_vectorizer, fanfics_pagination)
+            #
+            # response = {
+            #     'title': recommended_fanfic.title,
+            #     'author': recommended_fanfic.author,
+            #     'url': recommended_fanfic.url,
+            #     'fandom': recommended_fanfic.fandom,
+            #     'kudos': recommended_fanfic.kudos,
+            #     'average_sentiment': recommended_fanfic.average_sentiment,
+            #     # 'response_text': response_text
+            # }
+            #
+            # return jsonify({"response": response})
 
-            response = {
-                'title': recommended_fanfic.title,
-                'author': recommended_fanfic.author,
-                'url': recommended_fanfic.url,
-                'fandom': recommended_fanfic.fandom,
-                'kudos': recommended_fanfic.kudos,
-                'average_sentiment': recommended_fanfic.average_sentiment,
-                # 'response_text': response_text
-            }
-
-            return jsonify({"response": response})
-
-        except KeyError as e:
-            error_message = f"KeyError: {str(e)}"
-            app.logger.error(error_message)
-            return jsonify({'error': error_message}), 400  # Bad request
-
-        except NoResultFound as e:
-            error_message = "No result found in database query."
-            app.logger.error(error_message)
-            return jsonify({'error': error_message}), 404  # Not found
 
         except Exception as e:
-            error_message = f"An unexpected error occurred: {str(e)}"
-            app.logger.error(error_message)
-            traceback.print_exc()  # Print traceback for debugging
-            return jsonify({'error': error_message}), 500  # Internal server error
+            app.logger.error('An error occurred:', exc_info=True)
+            traceback.print_exc()
+            return jsonify({'error': str(e)}), 500
 
     @app.route('/')
     def index():
