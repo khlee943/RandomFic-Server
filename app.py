@@ -181,6 +181,17 @@ def create_app():
         random_index = random.randint(0, 2826)
         return Fanfic.query.filter_by(index=random_index).first()
 
+    @retry(stop=stop_after_delay(30), wait=wait_fixed(5))
+    def paginate_fanfics():
+        page_number = request.args.get('page', default=1, type=int)
+        page_size = request.args.get('size', default=10, type=int)
+        fanfics_paginated = Fanfic.query.paginate(page=page_number, per_page=page_size, error_out=False)
+        return fanfics_paginated
+
+    # Get the formatted fanfics, paged
+    global fanfics_pagination
+    fanfics_pagination = paginate_fanfics()
+
     @app.route('/random_fanfic', methods=['GET'])
     def random_fanfic():
         try:
@@ -199,7 +210,8 @@ def create_app():
     @app.route('/fanfics', methods=['GET'])
     def get_fanfics():
         try:
-            fanfics = Fanfic.query.all()
+            global fanfics_pagination
+            fanfics = fanfics_pagination.items
             fanfic_list = []
             for fanfic in fanfics:
                 fanfic_data = {
@@ -221,15 +233,12 @@ def create_app():
     # Recommendation Fanfic Feature
 
     @app.route('/chat', methods=['POST'])
-    def chat():
+    def chat(fanfics):
         try:
             user_input = request.json['message']
             # fanfics = Fanfic.query.all()
-            page_number = request.args.get('page', default=1, type=int)
-            page_size = request.args.get('size', default=10, type=int)
-            fanfics = Fanfic.query.paginate(page=page_number, per_page=page_size, error_out=False)
-
-            response_text, recommended_fanfic = recommend_fanfic(user_input, tfidf_vectorizer, fanfics)
+            global fanfics_pagination
+            response_text, recommended_fanfic = recommend_fanfic(user_input, tfidf_vectorizer, fanfics_pagination)
 
             response = {
                 'title': recommended_fanfic.title,
