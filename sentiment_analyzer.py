@@ -74,15 +74,15 @@ tfidf_vectorizer, tfidf_matrix = extract_features(data)
 tfidf_matrix_dense = tfidf_matrix.toarray()
 
 # Do Principal Components Analysis to simplify the vectors by reducing number of dimensions/components
-n_components = 120
+n_components = 20
 pca = PCA(n_components=n_components)
-tfidf_matrix_reduced = pca.fit_transform(tfidf_matrix_dense)
+tfidf_matrix_reduced = pca.fit_transform(tfidf_matrix)
 
 # Save PCA model if needed for later use
-with open('../pca_model.pkl', 'wb') as f:
+with open('pca_model.pkl', 'wb') as f:
     pickle.dump(pca, f)
 # Save tfidf_vectorizer if needed for later use
-with open('../tfidf_vectorizer.pkl', 'wb') as f:
+with open('tfidf_vectorizer.pkl', 'wb') as f:
     pickle.dump(tfidf_vectorizer, f)
 
 # Serialize vectors into JSON strings and add to df

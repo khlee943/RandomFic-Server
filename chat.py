@@ -17,8 +17,8 @@ def extract_features(data):
         'Content']
     # Convert text data to TF-IDF vectors
     tfidf_vectorizer = TfidfVectorizer(stop_words='english')
-    tfidf_matrix = tfidf_vectorizer.fit_transform(combined_text)
-    return tfidf_vectorizer, tfidf_matrix
+    tfdif_fanfic_content = tfidf_vectorizer.fit_transform(combined_text)
+    return tfidf_vectorizer, tfdif_fanfic_content
 
 # def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.05, batch_size=10):
 #     try:
@@ -63,7 +63,7 @@ def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.05,
             pca = pickle.load(f)
 
         # Convert user input to vector
-        user_vector = tfidf_vectorizer.transform([user_input]).toarray()
+        user_vector = tfidf_vectorizer.transform([user_input])
 
         # Reduce dimensions with PCA
         user_vector_reduced = pca.transform(user_vector)
