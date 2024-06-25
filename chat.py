@@ -22,15 +22,14 @@ def extract_features(data):
 
 def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.05, batch_size=10):
     try:
-        # Load PCA model
-        # with open('pca_model.pkl', 'rb') as f:
-        #     pca = pickle.load(f)
-        #
-        # # Convert user input to vector
-        # user_vector = tfidf_vectorizer.transform([user_input]).toarray()
-        #
-        # # Reduce dimensions with PCA
-        # user_vector_reduced = pca.transform(user_vector)
+        with open('pca_model.pkl', 'rb') as f:
+            pca = pickle.load(f)
+
+        # Convert user input to vector
+        user_vector = tfidf_vectorizer.transform([user_input]).toarray()
+
+        # Reduce dimensions with PCA
+        user_vector_reduced = pca.transform(user_vector)
 
         # Initialize tracking variables
         response_text = ""
