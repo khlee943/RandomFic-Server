@@ -53,7 +53,7 @@ def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.05,
     # Iterate over paginated fanfics
     page_number = 1
     while True:
-        fanfics_page = fanfics_paginated.items  # Get fanfics for current page
+        fanfics_page = fanfics.items  # Get fanfics for current page
         num_fanfics = len(fanfics_page)  # Number of fanfics in the current page
 
         # Batch processing
@@ -108,9 +108,9 @@ def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.05,
                 gc.collect()
 
         # Move to the next page if available
-        if not fanfics_paginated.has_next:
+        if not fanfics.has_next:
             break
-        fanfics_paginated = fanfics_paginated.next()  # Move to the next page
+        fanfics = fanfics.next()  # Move to the next page
         page_number += 1
 
     if found_similar_fanfic:
