@@ -16,10 +16,6 @@ import logging
 from sqlalchemy.dialects.postgresql.base import PGDialect
 from chat import preprocess_data, extract_features, recommend_fanfic
 
-def load_tfidf_vectorizer():
-    with open('tfidf_vectorizer_full.pkl', 'rb') as f:
-        return pickle.load(f)
-
 def create_app():
     # Override the _get_server_version_info method
     PGDialect._get_server_version_info = lambda *args: (9, 2)
@@ -45,8 +41,8 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db = SQLAlchemy(app)
 
-    data = preprocess_data('all_fanfics.csv')
-    tfidf_vectorizer_full, tfidf_matrix = extract_features(data)
+    with open('tfidf_vectorizer.pkl', 'rb') as f:
+        tfidf_vectorizer = pickle.load(f)
 
     # Define the database model
     class Fanfic(db.Model):
@@ -233,7 +229,7 @@ def create_app():
             page_size = request.args.get('size', default=10, type=int)
             fanfics = Fanfic.query.paginate(page=page_number, per_page=page_size, error_out=False)
 
-            response_text, recommended_fanfic = recommend_fanfic(user_input, tfidf_vectorizer_full, fanfics)
+            response_text, recommended_fanfic = recommend_fanfic(user_input, tfidf_vectorizer, fanfics)
 
             response = {
                 'title': recommended_fanfic.title,

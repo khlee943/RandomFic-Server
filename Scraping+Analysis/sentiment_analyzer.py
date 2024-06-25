@@ -14,7 +14,7 @@ import json
 sia = SentimentIntensityAnalyzer()
 
 # Read in data
-csv_file = '../all_fanfics.csv'
+csv_file = 'all_fanfics.csv'
 df = pd.read_csv(csv_file)
 # Remove "Summary: " from the beginning of each row in the 'Text' column
 df['Summary'] = df['Summary'].str.replace('Summary: ', '', regex=False)
@@ -81,6 +81,9 @@ tfidf_matrix_reduced = pca.fit_transform(tfidf_matrix_dense)
 # Save PCA model if needed for later use
 with open('../pca_model.pkl', 'wb') as f:
     pickle.dump(pca, f)
+# Save tfidf_vectorizer if needed for later use
+with open('../tfidf_vectorizer.pkl', 'wb') as f:
+    pickle.dump(tfidf_vectorizer, f)
 
 # Serialize vectors into JSON strings and add to df
 df['Vector'] = [json.dumps(vector.tolist()) for vector in tfidf_matrix_reduced]
