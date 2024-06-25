@@ -29,7 +29,7 @@ def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.05,
         user_vector = tfidf_vectorizer.transform([user_input]).toarray()
 
         # # Reduce dimensions with PCA
-        # user_vector_reduced = pca.transform(user_vector)
+        user_vector_reduced = pca.transform(user_vector)
 
         # Initialize tracking variables
         response_text = ""
