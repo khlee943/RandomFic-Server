@@ -19,7 +19,7 @@ def extract_features(data):
     tfidf_matrix = tfidf_vectorizer.fit_transform(combined_text)
     return tfidf_vectorizer, tfidf_matrix
 
-def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.5):
+def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.05):
     # Load PCA model
     with open('pca_model.pkl', 'rb') as f:
         pca = pickle.load(f)
