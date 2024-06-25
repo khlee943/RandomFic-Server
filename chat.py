@@ -19,7 +19,7 @@ def extract_features(data):
     tfidf_matrix = tfidf_vectorizer.fit_transform(combined_text)
     return tfidf_vectorizer, tfidf_matrix
 
-def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.05):
+def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.05, batch_size=1000):
     # Load PCA model
     with open('pca_model.pkl', 'rb') as f:
         pca = pickle.load(f)
@@ -35,30 +35,53 @@ def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.05)
     recommended_fanfic = None
     found_similar_fanfic = False
 
-    # Iterate through fanfics
-    for fanfic in fanfics:
+    # Batch processing
+    num_fanfics = len(fanfics)
+    for start in range(0, num_fanfics, batch_size):
+        end = min(start + batch_size, num_fanfics)
+        batch_fanfics = fanfics[start:end]
+
         try:
-            fanfic_vector = np.array(fanfic.vector)
-            if fanfic_vector is None:
+            # Batch vectors and indices
+            batch_vectors = []
+            batch_indices = []
+
+            for fanfic in batch_fanfics:
+                fanfic_vector = np.array(fanfic.vector)
+                if fanfic_vector is None:
+                    continue
+                batch_vectors.append(fanfic_vector)
+                batch_indices.append(fanfic.index)
+
+            if not batch_vectors:
                 continue
 
-            # Compute cosine similarity
-            similarity = cosine_similarity(user_vector_reduced, [fanfic_vector])[0, 0]
+            # Compute cosine similarities for the batch
+            similarities = cosine_similarity(user_vector_reduced, batch_vectors)
+
+            # Find the best match in the batch
+            max_batch_index = np.argmax(similarities)
+            max_batch_similarity = similarities[0, max_batch_index]
 
             # Check if similarity meets the minimum threshold
-            if similarity >= min_similarity:
-                recommended_fanfic = fanfic
+            if max_batch_similarity >= min_similarity:
+                recommended_fanfic = batch_fanfics[max_batch_index]
                 found_similar_fanfic = True
                 break
 
             # Track the most similar fanfic overall
-            if similarity > max_similarity:
-                max_similarity = similarity
-                recommended_fanfic = fanfic
+            if max_batch_similarity > max_similarity:
+                max_similarity = max_batch_similarity
+                recommended_fanfic = batch_fanfics[max_batch_index]
 
         except Exception as e:
-            print(f"Error processing fanfic {fanfic.index}: {e}")
+            print(f"Error processing batch from {start} to {end}: {e}")
             continue
+
+        finally:
+            # Clean up memory after each batch
+            del batch_vectors, batch_indices
+            gc.collect()
 
     if found_similar_fanfic:
         response_text = f"User: {user_input}\nAI: Based on your interest, here is a fanfiction recommendation:\n"
