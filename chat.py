@@ -23,47 +23,31 @@ def extract_features(data):
 def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.05, batch_size=10):
     try:
         # Load PCA model
-        with open('pca_model.pkl', 'rb') as f:
-            pca = pickle.load(f)
-
-        # Convert user input to vector
-        user_vector = tfidf_vectorizer.transform([user_input]).toarray()
-
-        # Reduce dimensions with PCA
-        user_vector_reduced = pca.transform(user_vector)
+        # with open('pca_model.pkl', 'rb') as f:
+        #     pca = pickle.load(f)
+        #
+        # # Convert user input to vector
+        # user_vector = tfidf_vectorizer.transform([user_input]).toarray()
+        #
+        # # Reduce dimensions with PCA
+        # user_vector_reduced = pca.transform(user_vector)
 
         # Initialize tracking variables
         response_text = ""
         recommended_fanfic = None
 
-        # Iterate over paginated fanfics
-        page_number = 1
-        while True:
-            fanfics_page = fanfics.items  # Get fanfics for current page
+        fanfics_page = fanfics.items  # Get fanfics for current page
 
-            # Get the first fanfic on the current page
-            if fanfics_page:
-                recommended_fanfic = fanfics_page[0]
-                response_text = f"User: {user_input}\nAI: Based on your interest, here is a fanfiction recommendation:\n"
-                response_text += f"- {recommended_fanfic.title} by {recommended_fanfic.author} ({recommended_fanfic.url})\n"
-                break
-
-            # Move to the next page if available
-            if not fanfics.has_next:
-                break
-            fanfics = fanfics.next()  # Move to the next page
-            page_number += 1
+        # Get the first fanfic on the current page
+        if fanfics_page:
+            recommended_fanfic = fanfics_page[0]
+            response_text = f"User: {user_input}\nAI: Based on your interest, here is a fanfiction recommendation:\n"
+            response_text += f"- {recommended_fanfic.title} by {recommended_fanfic.author} ({recommended_fanfic.url})\n"
 
         if not recommended_fanfic:
             response_text = "No fanfics available."
 
         return response_text, recommended_fanfic
-
-    except FileNotFoundError as fnf_error:
-        # Handle PCA model file not found error
-        error_message = f"PCA model file not found: {fnf_error}"
-        print(error_message)
-        return "An error occurred while recommending fanfics.", None
 
     except Exception as e:
         # Handle any other unexpected exceptions
