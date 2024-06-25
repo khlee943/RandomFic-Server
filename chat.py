@@ -34,7 +34,7 @@ def extract_features(data):
 #         print(f"Error selecting random fanfic: {e}")
 #         return "Error selecting random fanfic", None
 
-def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.05, batch_size=1000):
+def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.05, batch_size=10):
     # Load PCA model
     with open('pca_model.pkl', 'rb') as f:
         pca = pickle.load(f)
@@ -83,6 +83,8 @@ def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.05,
                 recommended_fanfic = batch_fanfics[max_batch_index]
                 found_similar_fanfic = True
                 break
+
+            print(f"Best similarity after batch {start // batch_size + 1}: {max_batch_similarity}")
 
             # Track the most similar fanfic overall
             if max_batch_similarity > max_similarity:
