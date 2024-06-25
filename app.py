@@ -8,13 +8,13 @@ import pandas as pd
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, NoResultFound
 from sqlalchemy import PickleType
 from tenacity import retry, stop_after_delay, wait_exponential, wait_fixed
 from flask_talisman import Talisman
 import logging
 from sqlalchemy.dialects.postgresql.base import PGDialect
-from chat import preprocess_data, extract_features, recommend_fanfic
+from chat import recommend_fanfic
 
 def create_app():
     # Override the _get_server_version_info method
@@ -250,10 +250,22 @@ def create_app():
             }
 
             return jsonify({"response": response})
+
+        except KeyError as e:
+            error_message = f"KeyError: {str(e)}"
+            app.logger.error(error_message)
+            return jsonify({'error': error_message}), 400  # Bad request
+
+        except NoResultFound as e:
+            error_message = "No result found in database query."
+            app.logger.error(error_message)
+            return jsonify({'error': error_message}), 404  # Not found
+
         except Exception as e:
-            app.logger.error('An error occurred:', exc_info=True)
-            traceback.print_exc()
-            return jsonify({'error': str(e)}), 500
+            error_message = f"An unexpected error occurred: {str(e)}"
+            app.logger.error(error_message)
+            traceback.print_exc()  # Print traceback for debugging
+            return jsonify({'error': error_message}), 500  # Internal server error
 
     @app.route('/')
     def index():
