@@ -50,55 +50,68 @@ def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.05,
     recommended_fanfic = None
     found_similar_fanfic = False
 
-    # Batch processing
-    num_fanfics = len(fanfics)
-    for start in range(0, num_fanfics, batch_size):
-        end = min(start + batch_size, num_fanfics)
-        batch_fanfics = fanfics[start:end]
+    # Iterate over paginated fanfics
+    page_number = 1
+    while True:
+        fanfics_page = fanfics_paginated.items  # Get fanfics for current page
+        num_fanfics = len(fanfics_page)  # Number of fanfics in the current page
 
-        try:
-            # Batch vectors and indices
-            batch_vectors = []
-            batch_indices = []
+        # Batch processing
+        for start in range(0, num_fanfics, batch_size):
+            end = min(start + batch_size, num_fanfics)
+            batch_fanfics = fanfics_page[start:end]
 
-            for fanfic in batch_fanfics:
-                fanfic_vector = np.array(fanfic.vector)
-                if fanfic_vector is None:
+            try:
+                # Batch vectors and indices
+                batch_vectors = []
+                batch_indices = []
+
+                for fanfic in batch_fanfics:
+                    fanfic_vector = np.array(fanfic.vector)
+                    if fanfic_vector is None:
+                        continue
+                    batch_vectors.append(fanfic_vector)
+                    batch_indices.append(fanfic.index)
+
+                if not batch_vectors:
                     continue
-                batch_vectors.append(fanfic_vector)
-                batch_indices.append(fanfic.index)
 
-            if not batch_vectors:
+                # Compute cosine similarities for the batch
+                similarities = cosine_similarity(user_vector_reduced, batch_vectors)
+
+                # Find the best match in the batch
+                max_batch_index = np.argmax(similarities)
+                max_batch_similarity = similarities[0, max_batch_index]
+
+                # Log the best similarity value after each batch
+                print(
+                    f"Best similarity after batch {start // batch_size + 1} on page {page_number}: {max_batch_similarity}")
+
+                # Check if similarity meets the minimum threshold
+                if max_batch_similarity >= min_similarity:
+                    recommended_fanfic = batch_fanfics[max_batch_index]
+                    found_similar_fanfic = True
+                    break
+
+                # Track the most similar fanfic overall
+                if max_batch_similarity > max_similarity:
+                    max_similarity = max_batch_similarity
+                    recommended_fanfic = batch_fanfics[max_batch_index]
+
+            except Exception as e:
+                print(f"Error processing batch from {start} to {end} on page {page_number}: {e}")
                 continue
 
-            # Compute cosine similarities for the batch
-            similarities = cosine_similarity(user_vector_reduced, batch_vectors)
+            finally:
+                # Clean up memory after each batch
+                del batch_vectors, batch_indices
+                gc.collect()
 
-            # Find the best match in the batch
-            max_batch_index = np.argmax(similarities)
-            max_batch_similarity = similarities[0, max_batch_index]
-
-            # Check if similarity meets the minimum threshold
-            if max_batch_similarity >= min_similarity:
-                recommended_fanfic = batch_fanfics[max_batch_index]
-                found_similar_fanfic = True
-                break
-
-            print(f"Best similarity after batch {start // batch_size + 1}: {max_batch_similarity}")
-
-            # Track the most similar fanfic overall
-            if max_batch_similarity > max_similarity:
-                max_similarity = max_batch_similarity
-                recommended_fanfic = batch_fanfics[max_batch_index]
-
-        except Exception as e:
-            print(f"Error processing batch from {start} to {end}: {e}")
-            continue
-
-        finally:
-            # Clean up memory after each batch
-            del batch_vectors, batch_indices
-            gc.collect()
+        # Move to the next page if available
+        if not fanfics_paginated.has_next:
+            break
+        fanfics_paginated = fanfics_paginated.next()  # Move to the next page
+        page_number += 1
 
     if found_similar_fanfic:
         response_text = f"User: {user_input}\nAI: Based on your interest, here is a fanfiction recommendation:\n"
