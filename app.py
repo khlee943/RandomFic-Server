@@ -223,7 +223,8 @@ def create_app():
     def chat():
         try:
             user_input = request.json['message']
-            fanfics = Fanfic.query.all()
+            # fanfics = Fanfic.query.all()
+            fanfics = Fanfic.query.paginate(page=page_number, per_page=page_size, error_out=False)
 
             response_text, recommended_fanfic = recommend_fanfic(user_input, tfidf_vectorizer_full, fanfics)
 
