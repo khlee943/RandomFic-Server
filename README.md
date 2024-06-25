@@ -11,17 +11,15 @@ __Tech Stack__
 
 __Deployment__
 
-For development:
-
 + Clone repository
-+ Run `docker build -t myapp .`
-+ run `docker run -p 8080:8080 myapp`
++ *Development only*: Change app.py to relax security settings
+  + `talisman = Talisman(app, content_security_policy=None, force_https=False)`
++ *Development only*: Change Dockerfile to build app locally
+  + `CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]`
++ Run `docker build -t fanficapp .`
++ run `docker run -p 8080:8080 fanficapp`
 + Open [http://localhost:8080](http://localhost:3000) with your browser to see the result.
-
-For production:
-
-+ Same as development instructions
 
 Hosted on Render.
 
-DB hosted on CockroachDB.
+DB hosted on Supabase.

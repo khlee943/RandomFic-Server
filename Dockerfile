@@ -24,7 +24,7 @@ ENV PORT=8080
 EXPOSE 8080
 
 
-# Run on localhost for now:
+# Run on localhost for now, for dev:
 #CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
-# Run the application with Gunicorn for better performance and scalability
+# Run the application with Gunicorn for better performance and scalability. for production
 CMD ["gunicorn", "run:app", "--timeout", "300", "-w", "4"]
