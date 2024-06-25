@@ -183,7 +183,8 @@ def create_app():
 
     @retry(stop=stop_after_delay(30), wait=wait_fixed(5))
     def paginate_fanfics(page_number=1, page_size=10):
-        fanfics_paginated = Fanfic.query.paginate(page=page_number, per_page=page_size, error_out=False)
+        with app.app_context():
+            fanfics_paginated = Fanfic.query.paginate(page=page_number, per_page=page_size, error_out=False)
         return fanfics_paginated
 
     # Get the formatted fanfics, paged
