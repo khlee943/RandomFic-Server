@@ -224,6 +224,8 @@ def create_app():
         try:
             user_input = request.json['message']
             # fanfics = Fanfic.query.all()
+            page_number = request.args.get('page', default=1, type=int)
+            page_size = request.args.get('size', default=10, type=int)
             fanfics = Fanfic.query.paginate(page=page_number, per_page=page_size, error_out=False)
 
             response_text, recommended_fanfic = recommend_fanfic(user_input, tfidf_vectorizer_full, fanfics)
