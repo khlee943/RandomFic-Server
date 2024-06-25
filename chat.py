@@ -22,40 +22,14 @@ def extract_features(data):
 
 def recommend_fanfic(user_input, tfidf_vectorizer, fanfics, min_similarity=0.05, batch_size=10):
     try:
-        try:
-            with open('pca_model.pkl', 'rb') as f:
-                pca = pickle.load(f)
-        except FileNotFoundError:
-            error_message = "PCA model file not found."
-            print(error_message)
-            return error_message, None
-        except pickle.UnpicklingError:
-            error_message = "Error unpickling PCA model file."
-            print(error_message)
-            return error_message, None
-        except Exception as e:
-            error_message = f"Error loading PCA model: {e}"
-            print(error_message)
-            traceback.print_exc()
-            return error_message, None
+        with open('pca_model.pkl', 'rb') as f:
+            pca = pickle.load(f)
 
-            # Convert user input to vector
-        try:
-            user_vector = tfidf_vectorizer.transform([user_input]).toarray()
-        except Exception as e:
-            error_message = f"Error transforming user input with TFIDF vectorizer: {e}"
-            print(error_message)
-            traceback.print_exc()
-            return error_message, None
-
-            # Reduce dimensions with PCA
-        try:
-            user_vector_reduced = pca.transform(user_vector)
-        except Exception as e:
-            error_message = f"Error applying PCA transformation: {e}"
-            print(error_message)
-            traceback.print_exc()
-            return error_message, None
+        # # Convert user input to vector
+        # user_vector = tfidf_vectorizer.transform([user_input]).toarray()
+        #
+        # # Reduce dimensions with PCA
+        # user_vector_reduced = pca.transform(user_vector)
 
         # Initialize tracking variables
         response_text = ""
