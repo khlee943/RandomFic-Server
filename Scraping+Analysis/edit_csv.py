@@ -1,7 +1,8 @@
 import pandas as pd
+import csv
 
 csv_file = 'fanfic_sentiment_analysis.csv'
-df = pd.read_csv(csv_file)
+df = pd.read_csv(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
 # Rename stuff to use in Supabase
 df.rename(columns={'ID': 'id'}, inplace=True)
@@ -17,4 +18,4 @@ df.rename(columns={'Vector': 'vector'}, inplace=True)
 final_df = df[['id', 'title', 'author', 'fandom', 'url', 'kudos', 'average_sentiment', 'vector']]
 
 # Save the final dataframe to a new CSV file
-final_df.to_csv('final_fanfics_edited.csv', index=False)
+final_df.to_csv('final_fanfics_200_edited.csv', index=False)

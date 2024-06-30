@@ -44,7 +44,7 @@ if dfs:
     # Concatenate all DataFrames into one
     combined_df = pd.concat(dfs, ignore_index=True)
     # Save the combined DataFrame to a new CSV file
-    combined_df.to_csv('all_fanfics.csv', index=False)
+    combined_df.to_csv('all_fanfics.csv', index=True, index_label='ID')
     print("Combined DataFrame saved to 'all_fanfics.csv'.")
 else:
     print("No valid data found in any files.")

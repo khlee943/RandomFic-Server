@@ -73,7 +73,7 @@ data = preprocess_data(csv_file)
 tfidf_vectorizer, tfidf_matrix = extract_features(data)
 
 # Do Principal Components Analysis to simplify the vectors by reducing number of dimensions/components
-n_components = 100
+n_components = 200
 pca = PCA(n_components=n_components)
 tfidf_matrix_reduced = pca.fit_transform(tfidf_matrix)
 print(tfidf_matrix_reduced.shape)
@@ -88,11 +88,21 @@ with open('../tfidf_vectorizer.pkl', 'wb') as f:
 # Serialize vectors into JSON strings and add to df
 df['Vector'] = [json.dumps(vector.tolist()) for vector in tfidf_matrix_reduced]
 
-# Select relevant columns for the final dataframe
-final_df = df[['Title', 'Author', 'Fandom', 'Url', 'Kudos', 'Summary', 'VADER_Sentiment', 'Content', 'Vector']]
-
 # Rename the 'VADER_Sentiment' column to 'Average_Sentiment'
-final_df.rename(columns={'VADER_Sentiment': 'Average_Sentiment'}, inplace=True)
+df.rename(columns={'VADER_Sentiment': 'Average_Sentiment'}, inplace=True)
+
+df.rename(columns={'ID': 'id'}, inplace=True)
+df.rename(columns={'Title': 'title'}, inplace=True)
+df.rename(columns={'Author': 'author'}, inplace=True)
+df.rename(columns={'Fandom': 'fandom'}, inplace=True)
+df.rename(columns={'Url': 'url'}, inplace=True)
+df.rename(columns={'Kudos': 'kudos'}, inplace=True)
+df.rename(columns={'Average_Sentiment': 'average_sentiment'}, inplace=True)
+df.rename(columns={'Vector': 'vector'}, inplace=True)
+
+# Select relevant columns for the final dataframe
+# final_df = df[['Title', 'Author', 'Fandom', 'Url', 'Kudos', 'Summary', 'VADER_Sentiment', 'Content', 'Vector']]
+final_df = df[['id', 'title', 'author', 'fandom', 'url', 'kudos', 'average_sentiment', 'vector']]
 
 # Save the final dataframe to a new CSV file
-final_df.to_csv('fanfic_sentiment_analysis.csv', index=True, index_label='ID')
+final_df.to_csv('final_fanfics_200_edited.csv', index=False)

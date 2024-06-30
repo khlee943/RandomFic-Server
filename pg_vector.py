@@ -30,7 +30,7 @@ class FanficRecommender:
         query_vector = self.get_vector(query)
 
         # Fetch fanfic data from Supabase
-        fanfics_data = supabase.table('fanfics_100').select('*').execute().data
+        fanfics_data = supabase.table('fanfics_200').select('*').execute().data
 
         if not fanfics_data:
             raise ValueError("No fanfics found in the Supabase table.")

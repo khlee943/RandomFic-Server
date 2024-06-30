@@ -12,6 +12,7 @@ __Tech Stack__
 __Deployment__
 
 + Clone repository
++ Configure ENV variables in the dockerfile to include SUPABASE_URL, SUPABASE_API_KEY, and SUPABASE_DB_CONNECTION
 + *Development only*: Change app.py to relax security settings
   + `talisman = Talisman(app, content_security_policy=None, force_https=False)`
 + *Development only*: Change Dockerfile to build app locally

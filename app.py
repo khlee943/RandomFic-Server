@@ -22,7 +22,7 @@ def create_app():
     CORS(app)  # Enable CORS for all routes
 
     # Load environment variables
-    supabase_url: str = 'https://heufgswqkwiuehkhgkmr.supabase.co'
+    supabase_url: str = os.environ.get("SUPABASE_URL")
     supabase_key: str = os.environ.get("SUPABASE_API_KEY")
     supabase: Client = create_client(supabase_url, supabase_key)
     db_connection_string = os.getenv('SUPABASE_DB_CONNECTION')
